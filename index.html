@@ -108,6 +108,15 @@
       font-size: 13px;
       color: #3366cc;
     }
+
+    .intro-block {
+      background: #ffffff;
+      border-left: 4px solid #4a90e2;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      border-radius: 4px;
+      font-size: 15px;
+    }
   </style>
 </head>
 
@@ -180,57 +189,17 @@
       }
     }
 
-    /* Build cough sections (patient-facing) */
-    function buildCoughContent() {
-      const container = document.createElement("div");
+    /* Build intro block */
+    function buildIntro(text) {
+      const intro = document.createElement("div");
+      intro.className = "intro-block";
+      intro.textContent = text;
+      return intro;
+    }
 
-      const sections = [
-        {
-          title: "Cough – Overview",
-          body:
-            "A cough is a common symptom. It can come from viral infections, allergies, post‑nasal drip, airway irritation, asthma‑like sensitivity, or exposure to irritants. Duration, pattern, and associated symptoms often help clarify what may be contributing."
-        },
-        {
-          title: "Common associated symptoms",
-          body:
-            "Cough may be dry or productive.\nYou may also notice:\n• fever or chills\n• nasal congestion or drainage\n• wheezing or chest tightness\n• sore throat\n• symptoms worse at night or with activity"
-        },
-        {
-          title: "Symptom patterns",
-          body:
-            "People often notice patterns such as:\n• dry cough early in viral illnesses\n• productive cough with mucus as symptoms evolve\n• cough worse when lying down (post‑nasal drip, reflux)\n• cough triggered by cold air, exercise, or allergens\n• lingering cough for weeks after a viral infection"
-        },
-        {
-          title: "Information to gather for a medical visit",
-          body:
-            "It can help to note:\n• how long the cough has lasted\n• whether it is dry or productive\n• presence of fever\n• recent sick contacts\n• medication use (ACE inhibitors can cause chronic cough)\n• environmental exposures (smoke, dust, new pets, mold)"
-        },
-        {
-          title: "Possible diagnoses (common causes)",
-          body:
-            "Common causes of cough can include:\n• viral upper respiratory infections (colds)\n• post‑nasal drip\n• asthma or airway sensitivity\n• bronchitis\n• pneumonia\n• environmental irritants\n\nThese are general possibilities; a clinician uses the full history and exam to narrow this further."
-        },
-        {
-          title: "Typical management themes",
-          body:
-            "General themes people often hear about include:\n• hydration and humidification\n• avoiding smoke and irritants\n• monitoring for fever or worsening symptoms\n• noting whether symptoms improve over 1–2 weeks\n• discussing persistent cough (>3–8 weeks) with a clinician\n• some coughs may require medications (for example, asthma or bacterial infections), decided by a clinician"
-        },
-        {
-          title: "Common reasons to seek medical evaluation",
-          body:
-            "People often seek medical evaluation for:\n• cough lasting more than a few weeks\n• cough interfering with sleep or daily activities\n• fever that persists or returns\n• symptoms that are worsening instead of improving"
-        },
-        {
-          title: "Common reasons to seek urgent evaluation",
-          body:
-            "People sometimes seek urgent or emergency care for:\n• coughing up blood\n• difficulty breathing\n• chest pain with breathing\n• high fever with shaking chills\n• confusion or severe weakness"
-        },
-        {
-          title: "Typical course",
-          body:
-            "A cough can last 4–6 weeks or longer. It often begins dry and becomes more productive over time. Mucus may change from clear to yellow or green during viral or bacterial illnesses. A new fever or worsening symptoms may change management, such as considering antibiotics."
-        }
-      ];
+    /* Build symptom module generator */
+    function buildModule(sections) {
+      const container = document.createElement("div");
 
       sections.forEach(sec => {
         const wrapper = document.createElement("div");
@@ -256,6 +225,50 @@
       return container;
     }
 
+    /* Cough module */
+    function coughModule() {
+      return buildModule([
+        { title: "Cough – Overview", body: "A cough is a common symptom..." },
+        { title: "Common associated symptoms", body: "Cough may be dry or productive..." },
+        { title: "Symptom patterns", body: "People often notice patterns such as..." },
+        { title: "Information to gather", body: "It can help to note..." },
+        { title: "Possible diagnoses (common causes)", body: "Common causes include viral infections..." },
+        { title: "Typical management themes", body: "General themes include hydration..." },
+        { title: "When to seek care", body: "People often seek care for..." },
+        { title: "Urgent reasons", body: "People sometimes seek urgent care for..." },
+        { title: "Typical course", body: "A cough can last 4–6 weeks..." }
+      ]);
+    }
+
+    /* Headache module */
+    function headacheModule() {
+      return buildModule([
+        { title: "Headache – Overview", body: "Headaches are common and can come from tension..." },
+        { title: "Common associated symptoms", body: "People may notice nausea, light sensitivity..." },
+        { title: "Symptom patterns", body: "Common patterns include tension-type, migraine..." },
+        { title: "Information to gather", body: "It can help to note onset, location, triggers..." },
+        { title: "Possible diagnoses (common causes)", body: "Common causes include tension-type headache..." },
+        { title: "Typical management themes", body: "General themes include hydration, sleep..." },
+        { title: "When to seek care", body: "People often seek care for headaches that..." },
+        { title: "Urgent reasons", body: "Urgent care is sometimes needed for sudden severe headache..." },
+        { title: "Typical course", body: "Headaches may last minutes to hours..." }
+      ]);
+    }
+
+    /* More options section */
+    function moreOptions() {
+      return buildModule([
+        {
+          title: "More options",
+          body:
+            "• Build a visit summary\n" +
+            "• Start an HPI interview\n" +
+            "• Learn about related symptoms\n" +
+            "• Track symptoms over time"
+        }
+      ]);
+    }
+
     /* Main logic */
     const form = document.getElementById('questionForm');
     const resultDiv = document.getElementById('result');
@@ -270,40 +283,30 @@
 
       resultContent.innerHTML = "";
 
-      const redFlags = [
-        "chest pain",
-        "shortness of breath",
-        "trouble breathing",
-        "severe headache",
-        "confusion",
-        "fainting",
-        "can't breathe",
-        "cannot breathe",
-        "stroke",
-        "weakness on one side",
-        "seizure",
-        "bleeding",
-        "severe abdominal pain"
-      ];
+      /* Intro summary */
+      const introText =
+        "Your question includes symptoms that can occur together. Each symptom has its own patterns, common causes, and helpful details to track. You can expand any section below to explore more information.";
+      resultContent.appendChild(buildIntro(introText));
 
-      const hasRedFlag = redFlags.some(flag => combined.includes(flag));
+      /* Symptom detection */
+      if (combined.includes("cough")) {
+        resultContent.appendChild(coughModule());
+      }
 
-      if (hasRedFlag) {
+      if (combined.includes("headache") || combined.includes("migraine")) {
+        resultContent.appendChild(headacheModule());
+      }
+
+      /* If nothing matched */
+      if (!combined.includes("cough") && !combined.includes("headache") && !combined.includes("migraine")) {
         const p = document.createElement("p");
         p.textContent =
-          "Some symptoms like the ones you mentioned can sometimes require urgent evaluation. " +
-          "If this feels severe, worsening, or concerning, seeking immediate medical care is recommended.";
+          "General information: People often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
         resultContent.appendChild(p);
-      } else {
-        if (combined.includes("cough")) {
-          resultContent.appendChild(buildCoughContent());
-        } else {
-          const p = document.createElement("p");
-          p.textContent =
-            "General information\nPeople often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
-          resultContent.appendChild(p);
-        }
       }
+
+      /* More options */
+      resultContent.appendChild(moreOptions());
 
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth' });
