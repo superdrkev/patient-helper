@@ -38,25 +38,61 @@
   <div id="result" class="result"></div>
 
   <script>
-    const form = document.getElementById('questionForm');
-    const resultDiv = document.getElementById('result');
+const form = document.getElementById('questionForm');
+const resultDiv = document.getElementById('result');
 
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
 
-      const question = document.getElementById('question').value.trim();
+  const question = document.getElementById('question').value.trim().toLowerCase();
+  const symptoms = document.getElementById('symptoms').value.trim().toLowerCase();
+  const meds = document.getElementById('medications').value.trim().toLowerCase();
 
-      // For now, this is just a placeholder response.
-      // Later, this is where we'll call your "engine" (backend + AI).
-      const responseText =
-        "Thank you for your question. This page is an early version of a patient information tool. " +
-        "Right now it does not give personalized medical advice. Please discuss this with your clinician. " +
-        "If your symptoms are severe or worsening, seek urgent or emergency care.";
+  let response = "";
 
-      resultDiv.textContent = responseText;
-      resultDiv.style.display = 'block';
-    });
-  </script>
+  const redFlags = [
+    "chest pain",
+    "shortness of breath",
+    "trouble breathing",
+    "severe headache",
+    "confusion",
+    "fainting",
+    "can't breathe",
+    "stroke",
+    "weakness on one side",
+    "seizure",
+    "bleeding",
+    "severe abdominal pain"
+  ];
+
+  const combined = question + " " + symptoms;
+  const hasRedFlag = redFlags.some(flag => combined.includes(flag));
+
+  if (hasRedFlag) {
+    response =
+      "Based on general medical guidelines, symptoms like the ones you described can sometimes " +
+      "require urgent or emergency evaluation. If this is severe, worsening, or concerning to you, " +
+      "please seek immediate medical care or call emergency services.";
+  } else {
+    response =
+      "Here is general medical information based on what you entered. " +
+      "This tool cannot diagnose or provide personalized medical advice.\n\n" +
+      "• Your question: " + question + "\n" +
+      (symptoms ? "• Symptoms noted: " + symptoms + "\n" : "") +
+      (meds ? "• Medications listed: " + meds + "\n" : "") +
+      "\nPeople with similar concerns often benefit from discussing:\n" +
+      "• How long symptoms have been present\n" +
+      "• Whether symptoms are improving or worsening\n" +
+      "• Any recent changes in medications or health\n\n" +
+      "If symptoms worsen or you feel unsafe, seek urgent care.";
+  }
+
+  resultDiv.textContent = response;
+  resultDiv.style.display = 'block';
+});
+</script>
+
 </body>
 </html>
+
 
