@@ -2,316 +2,237 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Patient Question Helper</title>
+  <title>Patient Intake Helper</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 40px auto;
-      line-height: 1.5;
-    }
-
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; line-height: 1.5; }
     h1 { margin-bottom: 0.2em; }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    textarea, input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .result {
-      margin-top: 25px;
-      padding: 18px;
-      border-radius: 6px;
-      background: #eef6ff;
-      border: 1px solid #bcd4ff;
-      font-size: 16px;
-      display: none;
-      animation: fadeIn 0.25s ease-in-out;
-    }
-
-    .answer-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* Consent modal */
-    .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.45);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    #consentButton:disabled {
-      opacity: 0.5;
-    }
-
-    /* Expandable sections */
-    .section {
-      margin-bottom: 12px;
-      border: 1px solid #d0d7e2;
-      border-radius: 6px;
-      background: #f7faff;
-    }
-
-    .section-header {
-      padding: 8px 10px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .section-body {
-      padding: 10px;
-      display: none;
-      white-space: pre-line;
-      font-size: 15px;
-    }
-
-    .toggle {
-      font-weight: normal;
-      font-size: 13px;
-      color: #3366cc;
-    }
-
-    .intro-block {
-      background: #ffffff;
-      border-left: 4px solid #4a90e2;
-      padding: 12px 14px;
-      margin-bottom: 18px;
-      border-radius: 4px;
-      font-size: 15px;
-    }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    textarea, input { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    .result { margin-top: 25px; padding: 18px; border-radius: 6px; background: #eef6ff; border: 1px solid #bcd4ff; display: none; }
+    .section { margin-bottom: 12px; border: 1px solid #d0d7e2; border-radius: 6px; background: #f7faff; }
+    .section-header { padding: 8px 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
+    .section-body { padding: 10px; display: none; white-space: pre-line; }
+    .toggle { font-size: 13px; color: #3366cc; }
+    .intro-block { background: #ffffff; border-left: 4px solid #4a90e2; padding: 12px 14px; margin-bottom: 18px; border-radius: 4px; }
+    .hpi-box { background: #fff; border: 1px solid #ccc; padding: 12px; margin-top: 20px; border-radius: 6px; }
   </style>
 </head>
 
 <body>
 
-  <!-- Consent Modal -->
-  <div id="consentModal" class="modal">
-    <div class="modal-content">
-      <h2>Before You Begin</h2>
-      <p>
-        This tool provides general medical information only. It does not diagnose, treat, or replace your clinician.
-        If you have severe or worsening symptoms, chest pain, trouble breathing, or think this may be an emergency,
-        seek immediate medical care.
-      </p>
+<h1>Patient Intake Helper</h1>
 
-      <label style="display:flex; align-items:center; margin-top:15px;">
-        <input type="checkbox" id="consentCheck" style="margin-right:10px;">
-        I understand and agree to continue
-      </label>
+<form id="intakeForm">
+  <label>Main question</label>
+  <textarea id="question" rows="3" required></textarea>
 
-      <button id="consentButton" disabled>Continue</button>
-    </div>
-  </div>
+  <label>Symptoms (optional)</label>
+  <textarea id="symptoms" rows="2"></textarea>
 
-  <h1>Patient Question Helper</h1>
+  <label>Medications (optional)</label>
+  <textarea id="medications" rows="2"></textarea>
 
-  <form id="questionForm">
-    <label for="question">What is your main question today?</label>
-    <textarea id="question" rows="4" required></textarea>
+  <button type="submit">Submit</button>
+</form>
 
-    <label for="symptoms">Key symptoms (optional)</label>
-    <textarea id="symptoms" rows="3" placeholder="Example: cough for 3 days, low-grade fever"></textarea>
+<div id="result" class="result">
+  <div id="resultContent"></div>
+</div>
 
-    <label for="medications">Current medications (optional)</label>
-    <textarea id="medications" rows="3" placeholder="Example: lisinopril, metformin, ibuprofen as needed"></textarea>
+<div id="hpiContainer" class="hpi-box" style="display:none;"></div>
 
-    <button type="submit">Submit</button>
-  </form>
+<script>
+/* -------------------------------
+   1. Expand/Collapse Logic
+--------------------------------*/
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  const toggle = header.querySelector(".toggle");
+  const open = body.style.display === "block";
+  body.style.display = open ? "none" : "block";
+  toggle.textContent = open ? "[expand]" : "[collapse]";
+}
 
-  <div id="result" class="result">
-    <div class="answer-title">Answer</div>
-    <div id="resultContent"></div>
-  </div>
+/* -------------------------------
+   2. Render a Symptom Module
+--------------------------------*/
+function renderModule(symptomName, moduleData) {
+  const container = document.createElement("div");
 
-  <script>
-    /* Consent modal logic */
-    const modal = document.getElementById('consentModal');
-    const consentCheck = document.getElementById('consentCheck');
-    const consentButton = document.getElementById('consentButton');
+  const sections = [
+    ["Overview", moduleData.overview],
+    ["Common associated symptoms", moduleData.associated_symptoms],
+    ["Patterns", moduleData.patterns],
+    ["Information to gather", moduleData.info_to_gather],
+    ["Possible diagnoses (common causes)", moduleData.possible_diagnoses],
+    ["Typical management themes", moduleData.management],
+    ["When to seek care", moduleData.seek_care],
+    ["Urgent reasons", moduleData.urgent],
+    ["Typical course", moduleData.course]
+  ];
 
-    consentCheck.addEventListener('change', () => {
-      consentButton.disabled = !consentCheck.checked;
-    });
+  sections.forEach(([title, bodyText]) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "section";
 
-    consentButton.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
+    const header = document.createElement("div");
+    header.className = "section-header";
+    header.onclick = () => toggleSection(header);
+    header.innerHTML = `<span>${symptomName} – ${title}</span><span class="toggle">[expand]</span>`;
 
-    /* Expand/collapse sections */
-    function toggleSection(header) {
-      const body = header.nextElementSibling;
-      const toggle = header.querySelector(".toggle");
+    const body = document.createElement("div");
+    body.className = "section-body";
+    body.textContent = bodyText;
 
-      if (body.style.display === "block") {
-        body.style.display = "none";
-        toggle.textContent = "[expand]";
-      } else {
-        body.style.display = "block";
-        toggle.textContent = "[collapse]";
+    wrapper.appendChild(header);
+    wrapper.appendChild(body);
+    container.appendChild(wrapper);
+  });
+
+  return container;
+}
+
+/* -------------------------------
+   3. HPI Builder
+--------------------------------*/
+let hpiQuestions = [];
+let hpiAnswers = {};
+let hpiIndex = 0;
+
+function startHPI(symptoms) {
+  callLLM_HPIQuestions(symptoms).then(data => {
+    hpiQuestions = data.questions;
+    hpiIndex = 0;
+    hpiAnswers = {};
+    askNextHPI();
+  });
+}
+
+function askNextHPI() {
+  const box = document.getElementById("hpiContainer");
+  box.style.display = "block";
+
+  if (hpiIndex >= hpiQuestions.length) {
+    return finalizeHPI();
+  }
+
+  const q = hpiQuestions[hpiIndex];
+  box.innerHTML = `
+    <p><strong>${q}</strong></p>
+    <textarea id="hpiAnswer" rows="3"></textarea>
+    <button onclick="saveHPI()">Next</button>
+  `;
+}
+
+function saveHPI() {
+  const answer = document.getElementById("hpiAnswer").value.trim();
+  hpiAnswers[hpiQuestions[hpiIndex]] = answer;
+  hpiIndex++;
+  askNextHPI();
+}
+
+function finalizeHPI() {
+  callLLM_HPIBuild(hpiAnswers).then(summary => {
+    const box = document.getElementById("hpiContainer");
+    box.innerHTML = `
+      <h3>Editable HPI Summary</h3>
+      <textarea rows="10" style="width:100%;">${summary}</textarea>
+    `;
+  });
+}
+
+/* -------------------------------
+   4. LLM Calls (Replace with your API)
+--------------------------------*/
+async function callLLM(prompt) {
+  // Replace this with your actual API call
+  console.log("LLM PROMPT:", prompt);
+  return {
+    intro: "Example intro from LLM.",
+    symptoms_detected: ["cough"],
+    modules: {
+      cough: {
+        overview: "Full overview...",
+        associated_symptoms: "Full text...",
+        patterns: "Full text...",
+        info_to_gather: "Full text...",
+        possible_diagnoses: "Full text...",
+        management: "Full text...",
+        seek_care: "Full text...",
+        urgent: "Full text...",
+        course: "Full text..."
       }
-    }
+    },
+    medication_notes: ["Example medication note."]
+  };
+}
 
-    /* Build intro block */
-    function buildIntro(text) {
-      const intro = document.createElement("div");
-      intro.className = "intro-block";
-      intro.textContent = text;
-      return intro;
-    }
+async function callLLM_HPIQuestions(symptoms) {
+  return {
+    questions: [
+      "When did the symptom start?",
+      "Has it changed over time?",
+      "What makes it better or worse?"
+    ]
+  };
+}
 
-    /* Build symptom module generator */
-    function buildModule(sections) {
-      const container = document.createElement("div");
+async function callLLM_HPIBuild(hpiData) {
+  return "Example HPI summary based on answers.";
+}
 
-      sections.forEach(sec => {
-        const wrapper = document.createElement("div");
-        wrapper.className = "section";
+/* -------------------------------
+   5. Main Intake Handler
+--------------------------------*/
+document.getElementById("intakeForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-        const header = document.createElement("div");
-        header.className = "section-header";
-        header.onclick = function() { toggleSection(header); };
-        header.innerHTML = `
-          <span>${sec.title}</span>
-          <span class="toggle">[expand]</span>
-        `;
+  const question = document.getElementById("question").value;
+  const symptoms = document.getElementById("symptoms").value;
+  const medications = document.getElementById("medications").value;
 
-        const body = document.createElement("div");
-        body.className = "section-body";
-        body.textContent = sec.body;
+  const prompt = `
+You are assisting a patient-facing medical information tool...
+[THE FULL PROMPT GOES HERE — OMITTED FOR BREVITY]
+  `;
 
-        wrapper.appendChild(header);
-        wrapper.appendChild(body);
-        container.appendChild(wrapper);
-      });
+  const data = await callLLM(prompt);
 
-      return container;
-    }
+  const result = document.getElementById("result");
+  const content = document.getElementById("resultContent");
+  content.innerHTML = "";
 
-    /* Cough module */
-    function coughModule() {
-      return buildModule([
-        { title: "Cough – Overview", body: "A cough is a common symptom..." },
-        { title: "Common associated symptoms", body: "Cough may be dry or productive..." },
-        { title: "Symptom patterns", body: "People often notice patterns such as..." },
-        { title: "Information to gather", body: "It can help to note..." },
-        { title: "Possible diagnoses (common causes)", body: "Common causes include viral infections..." },
-        { title: "Typical management themes", body: "General themes include hydration..." },
-        { title: "When to seek care", body: "People often seek care for..." },
-        { title: "Urgent reasons", body: "People sometimes seek urgent care for..." },
-        { title: "Typical course", body: "A cough can last 4–6 weeks..." }
-      ]);
-    }
+  const intro = document.createElement("div");
+  intro.className = "intro-block";
+  intro.textContent = data.intro;
+  content.appendChild(intro);
 
-    /* Headache module */
-    function headacheModule() {
-      return buildModule([
-        { title: "Headache – Overview", body: "Headaches are common and can come from tension..." },
-        { title: "Common associated symptoms", body: "People may notice nausea, light sensitivity..." },
-        { title: "Symptom patterns", body: "Common patterns include tension-type, migraine..." },
-        { title: "Information to gather", body: "It can help to note onset, location, triggers..." },
-        { title: "Possible diagnoses (common causes)", body: "Common causes include tension-type headache..." },
-        { title: "Typical management themes", body: "General themes include hydration, sleep..." },
-        { title: "When to seek care", body: "People often seek care for headaches that..." },
-        { title: "Urgent reasons", body: "Urgent care is sometimes needed for sudden severe headache..." },
-        { title: "Typical course", body: "Headaches may last minutes to hours..." }
-      ]);
-    }
+  data.symptoms_detected.forEach(sym => {
+    const module = renderModule(sym, data.modules[sym]);
+    content.appendChild(module);
+  });
 
-    /* More options section */
-    function moreOptions() {
-      return buildModule([
-        {
-          title: "More options",
-          body:
-            "• Build a visit summary\n" +
-            "• Start an HPI interview\n" +
-            "• Learn about related symptoms\n" +
-            "• Track symptoms over time"
-        }
-      ]);
-    }
+  if (data.medication_notes.length > 0) {
+    const medSection = document.createElement("div");
+    medSection.className = "section";
+    medSection.innerHTML = `
+      <div class="section-header" onclick="toggleSection(this)">
+        <span>Medication Notes</span><span class="toggle">[expand]</span>
+      </div>
+      <div class="section-body">${data.medication_notes.join("\n")}</div>
+    `;
+    content.appendChild(medSection);
+  }
 
-    /* Main logic */
-    const form = document.getElementById('questionForm');
-    const resultDiv = document.getElementById('result');
-    const resultContent = document.getElementById('resultContent');
+  const hpiButton = document.createElement("button");
+  hpiButton.textContent = "Start HPI";
+  hpiButton.onclick = () => startHPI(data.symptoms_detected);
+  content.appendChild(hpiButton);
 
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      const question = document.getElementById('question').value.trim().toLowerCase();
-      const symptoms = document.getElementById('symptoms').value.trim().toLowerCase();
-      const combined = question + " " + symptoms;
-
-      resultContent.innerHTML = "";
-
-      /* Intro summary */
-      const introText =
-        "Your question includes symptoms that can occur together. Each symptom has its own patterns, common causes, and helpful details to track. You can expand any section below to explore more information.";
-      resultContent.appendChild(buildIntro(introText));
-
-      /* Symptom detection */
-      if (combined.includes("cough")) {
-        resultContent.appendChild(coughModule());
-      }
-
-      if (combined.includes("headache") || combined.includes("migraine")) {
-        resultContent.appendChild(headacheModule());
-      }
-
-      /* If nothing matched */
-      if (!combined.includes("cough") && !combined.includes("headache") && !combined.includes("migraine")) {
-        const p = document.createElement("p");
-        p.textContent =
-          "General information: People often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
-        resultContent.appendChild(p);
-      }
-
-      /* More options */
-      resultContent.appendChild(moreOptions());
-
-      resultDiv.style.display = 'block';
-      resultDiv.scrollIntoView({ behavior: 'smooth' });
-    });
-  </script>
+  result.style.display = "block";
+});
+</script>
 
 </body>
 </html>
