@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Question Helper</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; line-height: 1.5; }
+    h1 { margin-bottom: 0.2em; }
+    .disclaimer { background: #fff3cd; padding: 10px; border-radius: 4px; border: 1px solid #ffeeba; margin-bottom: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    textarea, input { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    .result { margin-top: 25px; padding: 10px; border-radius: 4px; background: #f1f3f5; display: none; }
+  </style>
+</head>
+<body>
+  <h1>Patient Question Helper</h1>
+
+  <div class="disclaimer">
+    This tool provides general medical information only. It does not diagnose, treat, or replace your clinician.
+    If you have severe or worsening symptoms, chest pain, trouble breathing, or think this may be an emergency,
+    call emergency services or go to the nearest emergency department.
+  </div>
+
+  <form id="questionForm">
+    <label for="question">What is your main question today?</label>
+    <textarea id="question" rows="4" required></textarea>
+
+    <label for="symptoms">Key symptoms (optional)</label>
+    <textarea id="symptoms" rows="3" placeholder="Example: cough for 3 days, low-grade fever"></textarea>
+
+    <label for="medications">Current medications (optional)</label>
+    <textarea id="medications" rows="3" placeholder="Example: lisinopril, metformin, ibuprofen as needed"></textarea>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="result" class="result"></div>
+
+  <script>
+    const form = document.getElementById('questionForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const question = document.getElementById('question').value.trim();
+
+      // For now, this is just a placeholder response.
+      // Later, this is where we'll call your "engine" (backend + AI).
+      const responseText =
+        "Thank you for your question. This page is an early version of a patient information tool. " +
+        "Right now it does not give personalized medical advice. Please discuss this with your clinician. " +
+        "If your symptoms are severe or worsening, seek urgent or emergency care.";
+
+      resultDiv.textContent = responseText;
+      resultDiv.style.display = 'block';
+    });
+  </script>
+</body>
+</html>
