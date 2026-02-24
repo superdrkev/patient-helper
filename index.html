@@ -4,42 +4,33 @@
   <meta charset="UTF-8">
   <title>Patient Question Helper</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      max-width: 700px; 
-      margin: 40px auto; 
-      line-height: 1.5; 
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      line-height: 1.5;
     }
 
     h1 { margin-bottom: 0.2em; }
 
-    .disclaimer { 
-      background: #fff3cd; 
-      padding: 10px; 
-      border-radius: 4px; 
-      border: 1px solid #ffeeba; 
-      margin-bottom: 20px; 
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
     }
 
-    label { 
-      display: block; 
-      margin-top: 15px; 
-      font-weight: bold; 
+    textarea, input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
     }
 
-    textarea, input { 
-      width: 100%; 
-      padding: 8px; 
-      margin-top: 5px; 
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
     }
 
-    button { 
-      margin-top: 20px; 
-      padding: 10px 20px; 
-      font-size: 16px; 
-    }
-
-    /* Improved answer box */
     .result {
       margin-top: 25px;
       padding: 18px;
@@ -52,21 +43,66 @@
       animation: fadeIn 0.25s ease-in-out;
     }
 
+    .answer-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
+    }
+
+    /* Consent modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #consentButton:disabled {
+      opacity: 0.5;
     }
   </style>
 </head>
 
 <body>
-  <h1>Patient Question Helper</h1>
 
-  <div class="disclaimer">
-    This tool provides general medical information only. It does not diagnose, treat, or replace your clinician.
-    If you have severe or worsening symptoms, chest pain, trouble breathing, or think this may be an emergency,
-    call emergency services or go to the nearest emergency department.
+  <!-- Consent Modal -->
+  <div id="consentModal" class="modal">
+    <div class="modal-content">
+      <h2>Before You Begin</h2>
+      <p>
+        This tool provides general medical information only. It does not diagnose, treat, or replace your clinician.
+        If you have severe or worsening symptoms, chest pain, trouble breathing, or think this may be an emergency,
+        seek immediate medical care.
+      </p>
+
+      <label style="display:flex; align-items:center; margin-top:15px;">
+        <input type="checkbox" id="consentCheck" style="margin-right:10px;">
+        I understand and agree to continue
+      </label>
+
+      <button id="consentButton" disabled>Continue</button>
+    </div>
   </div>
+
+  <h1>Patient Question Helper</h1>
 
   <form id="questionForm">
     <label for="question">What is your main question today?</label>
@@ -82,11 +118,25 @@
   </form>
 
   <div id="result" class="result">
-    <strong style="font-size:18px; display:block; margin-bottom:10px;">Your Answer</strong>
+    <div class="answer-title">Answer</div>
     <div id="resultText"></div>
   </div>
 
   <script>
+    /* Consent modal logic */
+    const modal = document.getElementById('consentModal');
+    const consentCheck = document.getElementById('consentCheck');
+    const consentButton = document.getElementById('consentButton');
+
+    consentCheck.addEventListener('change', () => {
+      consentButton.disabled = !consentCheck.checked;
+    });
+
+    consentButton.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    /* Main logic */
     const form = document.getElementById('questionForm');
     const resultDiv = document.getElementById('result');
     const resultText = document.getElementById('resultText');
@@ -120,21 +170,56 @@
 
       if (hasRedFlag) {
         response =
-          "Based on general medical guidelines, symptoms like the ones you described can sometimes " +
-          "require urgent or emergency evaluation. If this is severe, worsening, or concerning to you, " +
-          "please seek immediate medical care or call emergency services.";
+          "Some symptoms like the ones you mentioned can sometimes require urgent evaluation. " +
+          "If this feels severe, worsening, or concerning, seeking immediate medical care is recommended.";
       } else {
-        response =
-          "Here is general medical information based on what you entered. " +
-          "This tool cannot diagnose or provide personalized medical advice.\n\n" +
-          "• Your question: " + question + "\n" +
-          (symptoms ? "• Symptoms noted: " + symptoms + "\n" : "") +
-          (meds ? "• Medications listed: " + meds + "\n" : "") +
-          "\nPeople with similar concerns often benefit from discussing:\n" +
-          "• How long symptoms have been present\n" +
-          "• Whether symptoms are improving or worsening\n" +
-          "• Any recent changes in medications or health\n\n" +
-          "If symptoms worsen or you feel unsafe, seek urgent care.";
+
+        /* Structured cough content */
+        if (combined.includes("cough")) {
+          response =
+            "Overview\n" +
+            "A cough is a common symptom and can come from airway irritation, viral infections, allergies, post‑nasal drip, or airway sensitivity.\n\n" +
+
+            "Common associated symptoms\n" +
+            "• dry or productive cough\n" +
+            "• fever or chills\n" +
+            "• nasal congestion or drainage\n" +
+            "• wheezing or chest tightness\n" +
+            "• symptoms worse at night or with activity\n" +
+            "• recent sick contacts or exposures\n\n" +
+
+            "General considerations clinicians often review\n" +
+            "• duration\n" +
+            "• dry vs productive\n" +
+            "• improving or spreading\n" +
+            "• recent illnesses or exposures\n" +
+            "• medication use (such as ACE inhibitors)\n" +
+            "• environmental factors (smoke, dust, allergens)\n\n" +
+
+            "General management themes\n" +
+            "• hydration and humidification\n" +
+            "• avoiding irritants\n" +
+            "• monitoring for fever or worsening symptoms\n" +
+            "• noting whether symptoms improve over 1–2 weeks\n" +
+            "• discussing persistent cough (>3–8 weeks) with a clinician\n\n" +
+
+            "When people commonly seek medical evaluation\n" +
+            "• cough lasting more than a few weeks\n" +
+            "• cough interfering with sleep or daily activities\n" +
+            "• fever that persists or returns\n" +
+            "• symptoms that are worsening instead of improving\n\n" +
+
+            "Reasons people sometimes seek urgent evaluation\n" +
+            "• coughing up blood\n" +
+            "• difficulty breathing\n" +
+            "• chest pain with breathing\n" +
+            "• high fever with shaking chills\n" +
+            "• confusion or severe weakness";
+        } else {
+          response =
+            "General information\n" +
+            "People often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
+        }
       }
 
       resultText.textContent = response;
