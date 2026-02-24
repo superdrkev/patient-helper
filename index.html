@@ -29,6 +29,7 @@
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
+      cursor: pointer;
     }
 
     .result {
@@ -38,7 +39,6 @@
       background: #eef6ff;
       border: 1px solid #bcd4ff;
       font-size: 16px;
-      white-space: pre-line;
       display: none;
       animation: fadeIn 0.25s ease-in-out;
     }
@@ -77,6 +77,36 @@
 
     #consentButton:disabled {
       opacity: 0.5;
+    }
+
+    /* Expandable sections */
+    .section {
+      margin-bottom: 12px;
+      border: 1px solid #d0d7e2;
+      border-radius: 6px;
+      background: #f7faff;
+    }
+
+    .section-header {
+      padding: 8px 10px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-body {
+      padding: 10px;
+      display: none;
+      white-space: pre-line;
+      font-size: 15px;
+    }
+
+    .toggle {
+      font-weight: normal;
+      font-size: 13px;
+      color: #3366cc;
     }
   </style>
 </head>
@@ -119,7 +149,7 @@
 
   <div id="result" class="result">
     <div class="answer-title">Answer</div>
-    <div id="resultText"></div>
+    <div id="resultContent"></div>
   </div>
 
   <script>
@@ -136,19 +166,109 @@
       modal.style.display = 'none';
     });
 
+    /* Expand/collapse sections */
+    function toggleSection(header) {
+      const body = header.nextElementSibling;
+      const toggle = header.querySelector(".toggle");
+
+      if (body.style.display === "block") {
+        body.style.display = "none";
+        toggle.textContent = "[expand]";
+      } else {
+        body.style.display = "block";
+        toggle.textContent = "[collapse]";
+      }
+    }
+
+    /* Build cough sections (patient-facing) */
+    function buildCoughContent() {
+      const container = document.createElement("div");
+
+      const sections = [
+        {
+          title: "Cough – Overview",
+          body:
+            "A cough is a common symptom. It can come from viral infections, allergies, post‑nasal drip, airway irritation, asthma‑like sensitivity, or exposure to irritants. Duration, pattern, and associated symptoms often help clarify what may be contributing."
+        },
+        {
+          title: "Common associated symptoms",
+          body:
+            "Cough may be dry or productive.\nYou may also notice:\n• fever or chills\n• nasal congestion or drainage\n• wheezing or chest tightness\n• sore throat\n• symptoms worse at night or with activity"
+        },
+        {
+          title: "Symptom patterns",
+          body:
+            "People often notice patterns such as:\n• dry cough early in viral illnesses\n• productive cough with mucus as symptoms evolve\n• cough worse when lying down (post‑nasal drip, reflux)\n• cough triggered by cold air, exercise, or allergens\n• lingering cough for weeks after a viral infection"
+        },
+        {
+          title: "Information to gather for a medical visit",
+          body:
+            "It can help to note:\n• how long the cough has lasted\n• whether it is dry or productive\n• presence of fever\n• recent sick contacts\n• medication use (ACE inhibitors can cause chronic cough)\n• environmental exposures (smoke, dust, new pets, mold)"
+        },
+        {
+          title: "Possible diagnoses (common causes)",
+          body:
+            "Common causes of cough can include:\n• viral upper respiratory infections (colds)\n• post‑nasal drip\n• asthma or airway sensitivity\n• bronchitis\n• pneumonia\n• environmental irritants\n\nThese are general possibilities; a clinician uses the full history and exam to narrow this further."
+        },
+        {
+          title: "Typical management themes",
+          body:
+            "General themes people often hear about include:\n• hydration and humidification\n• avoiding smoke and irritants\n• monitoring for fever or worsening symptoms\n• noting whether symptoms improve over 1–2 weeks\n• discussing persistent cough (>3–8 weeks) with a clinician\n• some coughs may require medications (for example, asthma or bacterial infections), decided by a clinician"
+        },
+        {
+          title: "Common reasons to seek medical evaluation",
+          body:
+            "People often seek medical evaluation for:\n• cough lasting more than a few weeks\n• cough interfering with sleep or daily activities\n• fever that persists or returns\n• symptoms that are worsening instead of improving"
+        },
+        {
+          title: "Common reasons to seek urgent evaluation",
+          body:
+            "People sometimes seek urgent or emergency care for:\n• coughing up blood\n• difficulty breathing\n• chest pain with breathing\n• high fever with shaking chills\n• confusion or severe weakness"
+        },
+        {
+          title: "Typical course",
+          body:
+            "A cough can last 4–6 weeks or longer. It often begins dry and becomes more productive over time. Mucus may change from clear to yellow or green during viral or bacterial illnesses. A new fever or worsening symptoms may change management, such as considering antibiotics."
+        }
+      ];
+
+      sections.forEach(sec => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "section";
+
+        const header = document.createElement("div");
+        header.className = "section-header";
+        header.onclick = function() { toggleSection(header); };
+        header.innerHTML = `
+          <span>${sec.title}</span>
+          <span class="toggle">[expand]</span>
+        `;
+
+        const body = document.createElement("div");
+        body.className = "section-body";
+        body.textContent = sec.body;
+
+        wrapper.appendChild(header);
+        wrapper.appendChild(body);
+        container.appendChild(wrapper);
+      });
+
+      return container;
+    }
+
     /* Main logic */
     const form = document.getElementById('questionForm');
     const resultDiv = document.getElementById('result');
-    const resultText = document.getElementById('resultText');
+    const resultContent = document.getElementById('resultContent');
 
     form.addEventListener('submit', function(event) {
       event.preventDefault();
 
       const question = document.getElementById('question').value.trim().toLowerCase();
       const symptoms = document.getElementById('symptoms').value.trim().toLowerCase();
-      const meds = document.getElementById('medications').value.trim().toLowerCase();
+      const combined = question + " " + symptoms;
 
-      let response = "";
+      resultContent.innerHTML = "";
 
       const redFlags = [
         "chest pain",
@@ -158,6 +278,7 @@
         "confusion",
         "fainting",
         "can't breathe",
+        "cannot breathe",
         "stroke",
         "weakness on one side",
         "seizure",
@@ -165,64 +286,25 @@
         "severe abdominal pain"
       ];
 
-      const combined = question + " " + symptoms;
       const hasRedFlag = redFlags.some(flag => combined.includes(flag));
 
       if (hasRedFlag) {
-        response =
+        const p = document.createElement("p");
+        p.textContent =
           "Some symptoms like the ones you mentioned can sometimes require urgent evaluation. " +
           "If this feels severe, worsening, or concerning, seeking immediate medical care is recommended.";
+        resultContent.appendChild(p);
       } else {
-
-        /* Structured cough content */
         if (combined.includes("cough")) {
-          response =
-            "Overview\n" +
-            "A cough is a common symptom and can come from airway irritation, viral infections, allergies, post‑nasal drip, or airway sensitivity.\n\n" +
-
-            "Common associated symptoms\n" +
-            "• dry or productive cough\n" +
-            "• fever or chills\n" +
-            "• nasal congestion or drainage\n" +
-            "• wheezing or chest tightness\n" +
-            "• symptoms worse at night or with activity\n" +
-            "• recent sick contacts or exposures\n\n" +
-
-            "General considerations clinicians often review\n" +
-            "• duration\n" +
-            "• dry vs productive\n" +
-            "• improving or spreading\n" +
-            "• recent illnesses or exposures\n" +
-            "• medication use (such as ACE inhibitors)\n" +
-            "• environmental factors (smoke, dust, allergens)\n\n" +
-
-            "General management themes\n" +
-            "• hydration and humidification\n" +
-            "• avoiding irritants\n" +
-            "• monitoring for fever or worsening symptoms\n" +
-            "• noting whether symptoms improve over 1–2 weeks\n" +
-            "• discussing persistent cough (>3–8 weeks) with a clinician\n\n" +
-
-            "When people commonly seek medical evaluation\n" +
-            "• cough lasting more than a few weeks\n" +
-            "• cough interfering with sleep or daily activities\n" +
-            "• fever that persists or returns\n" +
-            "• symptoms that are worsening instead of improving\n\n" +
-
-            "Reasons people sometimes seek urgent evaluation\n" +
-            "• coughing up blood\n" +
-            "• difficulty breathing\n" +
-            "• chest pain with breathing\n" +
-            "• high fever with shaking chills\n" +
-            "• confusion or severe weakness";
+          resultContent.appendChild(buildCoughContent());
         } else {
-          response =
-            "General information\n" +
-            "People often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
+          const p = document.createElement("p");
+          p.textContent =
+            "General information\nPeople often review duration, pattern, associated symptoms, recent illnesses, medication use, and environmental factors.";
+          resultContent.appendChild(p);
         }
       }
 
-      resultText.textContent = response;
       resultDiv.style.display = 'block';
       resultDiv.scrollIntoView({ behavior: 'smooth' });
     });
